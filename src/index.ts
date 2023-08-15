@@ -1,9 +1,13 @@
 import express from 'express';
+import fs from 'fs';
+import https from 'https';
 import cors from 'cors';
 import analyticsRouter from './routes/analytics';
 import { configure } from './tools';
 const app = express();
 const PORT = process.env.PORT || 3000;
+const privateKey = fs.readFileSync('ssl/privkey.pem');
+const certificate = fs.readFileSync('ssl/cert.pem');
 
 configure();
 app.use((req, res, next) => {
@@ -25,6 +29,9 @@ app.all("/ping", (_req, res) => {
 
 app.use("/api/analytics", analyticsRouter);
 
-app.listen(PORT, () => {
+https.createServer({
+    key: privateKey,
+    cert: certificate
+}, app).listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

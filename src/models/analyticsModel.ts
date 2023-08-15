@@ -234,7 +234,6 @@ const getCategories = (filters: ReportOrderFilters): Promise<RowCategories[]> =>
         LEFT JOIN ya_branch AS bra ON bra.branch_id=shi.branch_id
         WHERE pro.product_id <> 1`;
         
-        console.log(sql);
         /* Filtros */
         if (filters) {
             if (filters.dateFrom) {

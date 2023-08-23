@@ -260,14 +260,14 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                     result.total_amount_tax_total,
                     result.total_amount_total,
                     result.total_amount_margin,
-                    result.total_percent_margin,
+                    result.total_amount_margin > 0 && result.total_amount_untaxed > 0 ? result.total_amount_margin / result.total_amount_untaxed : 0,
                 ];
     
                 return bodyRowData;
             });
             
             Promise.all(promises).then((rows) => {
-                console.timeEnd('customerInvoices');
+                console.timeEnd('orders');
                 const rowsU = rows.filter(row => row);
                 if (rowsU.length > 0) {
                     const createdRows = worksheet.addRows(rowsU);
@@ -328,7 +328,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                         date1904: false,
                     },
                     {
-                        formula: `=(F${rowIni + 1}/C${rowCount})`,
+                        formula: `=(F${rowCount + 1}/C${rowCount + 1})`,
                         date1904: false,
                     },
                 ];
@@ -456,7 +456,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                     result.total_amount_tax_total,
                     result.total_amount_total,
                     result.total_amount_margin,
-                    result.total_percent_margin,
+                    result.total_amount_margin > 0 && result.total_amount_untaxed > 0 ? result.total_amount_margin / result.total_amount_untaxed : 0,
                     paymentMethods ? paymentMethods : '',
                     result.order_status_id === '4' ? 'Cancelado' : 'Activo',
                 ];
@@ -465,7 +465,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
             });
             
             Promise.all(promises).then((rows) => {
-                console.timeEnd('customerInvoices');
+                console.timeEnd('orders');
                 const rowsU = rows.filter(row => row);
                 if (rowsU.length > 0) {
                     const createdRows = worksheet.addRows(rowsU);
@@ -517,14 +517,6 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                     '',
                     '',
                     {
-                        formula: `=SUM(H${rowIni + 1}:H${rowCount})`,
-                        date1904: false,
-                    },
-                    {
-                        formula: `=SUM(I${rowIni + 1}:I${rowCount})`,
-                        date1904: false,
-                    },
-                    {
                         formula: `=SUM(J${rowIni + 1}:J${rowCount})`,
                         date1904: false,
                     },
@@ -533,9 +525,18 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                         date1904: false,
                     },
                     {
-                        formula: `=(K${rowIni + 1}/H${rowCount})`,
+                        formula: `=SUM(L${rowIni + 1}:L${rowCount})`,
                         date1904: false,
                     },
+                    {
+                        formula: `=SUM(M${rowIni + 1}:M${rowCount})`,
+                        date1904: false,
+                    },
+                    {
+                        formula: `=(M${rowCount + 1}/J${rowCount + 1})`,
+                        date1904: false,
+                    },
+                    '',
                     '',
                 ];
 
@@ -644,7 +645,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
     
             /* --- Registros --- */
             let row = (rowIni);
-            console.time('orders')
+            console.time('orders');
             const promises = orders.map(async(result) => {
                 const configCurrency = filters.configCurrencyCode;
     
@@ -665,7 +666,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                     result.total_amount_total,
                     result.total_amount_cost,
                     result.total_amount_margin,
-                    result.total_percent_margin,
+                    result.total_amount_margin > 0 && result.total_amount_untaxed > 0 ? result.total_amount_margin / result.total_amount_untaxed : 0,
                     result.order_status_id === '4' ? 'Cancelado' : 'Activo',
                 ];
     
@@ -673,7 +674,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
             });
             
             Promise.all(promises).then((rows) => {
-                console.timeEnd('customerInvoices');
+                console.time('orders');
                 const rowsU = rows.filter(row => row);
                 if (rowsU.length > 0) {
                     const createdRows = worksheet.addRows(rowsU);
@@ -683,7 +684,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                             const col = +cell.col;
                             if ([1, 2, 3, 4, 6, 8, 9, colEndNumber].includes(col)) {
                                 cell.alignment = HORIZONTAL_CENTER_ALIGNMENT;
-                            } else if (col >= 10 && col <= 15) {
+                            } else if (col > 10 && col <= 15) {
                                 cell.alignment = HORIZONTAL_RIGHT_ALIGNMENT;
                                 cell.numFmt = CURRENCY_FORMAT;
                             } else if (col === 16) {
@@ -725,14 +726,6 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                     '',
                     '',
                     {
-                        formula: `=SUM(H${rowIni + 1}:H${rowCount})`,
-                        date1904: false,
-                    },
-                    {
-                        formula: `=SUM(I${rowIni + 1}:I${rowCount})`,
-                        date1904: false,
-                    },
-                    {
                         formula: `=SUM(J${rowIni + 1}:J${rowCount})`,
                         date1904: false,
                     },
@@ -749,7 +742,15 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                         date1904: false,
                     },
                     {
-                        formula: `=(M${rowIni + 1}/I${rowCount})`,
+                        formula: `=SUM(N${rowIni + 1}:N${rowCount})`,
+                        date1904: false,
+                    },
+                    {
+                        formula: `=SUM(O${rowIni + 1}:O${rowCount})`,
+                        date1904: false,
+                    },
+                    {
+                        formula: `=(O${rowCount + 1}/K${rowCount + 1})`,
                         date1904: false,
                     },
                     '',
@@ -851,14 +852,14 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                     result.quantity,
                     result.total_amount_total,
                     result.total_amount_margin,
-                    result.total_percent_margin,
+                    result.total_amount_margin > 0 && result.total_amount_untaxed > 0 ? result.total_amount_margin / result.total_amount_untaxed : 0,
                 ];
     
                 return bodyRowData;
             });
             
             Promise.all(promises).then((rows) => {
-                console.timeEnd('customerInvoices');
+                console.timeEnd('orders');
                 const rowsU = rows.filter(row => row);
                 if (rowsU.length > 0) {
                     const createdRows = worksheet.addRows(rowsU);
@@ -866,7 +867,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                         /* Estilo de celdas */
                         row.eachCell((cell) => {
                             const col = +cell.col;
-                            if ([2, 4, 7].includes(col)) {
+                            if ([2, 3, 4].includes(col)) {
                                 cell.alignment = HORIZONTAL_CENTER_ALIGNMENT;
                             } else if (col >= 5 && col <= 6) {
                                 cell.alignment = HORIZONTAL_RIGHT_ALIGNMENT;
@@ -922,7 +923,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                         date1904: false,
                     },
                     {
-                        formula: `=(F${rowIni + 1}/C${rowCount})`,
+                        formula: `=(F${rowCount + 1}/C${rowCount + 1})`,
                         date1904: false,
                     },
                 ];
@@ -1006,7 +1007,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
     
             /* --- Registros --- */
             let row = (rowIni);
-            console.time('orders')
+            console.time('orders');
             const promises = orders.map(async(result) => {
     
                 /* --- Valores de Columnas --- */
@@ -1014,14 +1015,14 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                     result.default_code,
                     result.name,
                     result.total_quantity,
-                    result.amount_total,
+                    result.total_amount_total,
                 ];
     
                 return bodyRowData;
             });
             
             Promise.all(promises).then((rows) => {
-                console.timeEnd('customerInvoices');
+                console.timeEnd('orders');
                 const rowsU = rows.filter(row => row);
                 if (rowsU.length > 0) {
                     const createdRows = worksheet.addRows(rowsU);
@@ -1176,7 +1177,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                     result.usr_order,
                     result.total_amount_untaxed,
                     result.total_amount_tax,
-                    result.sum_total,
+                    result.total_amount_total,
                     result.total_order_count,
                     devoluciones,
                 ];
@@ -1185,7 +1186,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
             });
             
             Promise.all(promises).then((rows) => {
-                console.timeEnd('customerInvoices');
+                console.timeEnd('orders');
                 const rowsU = rows.filter(row => row);
                 if (rowsU.length > 0) {
                     const createdRows = worksheet.addRows(rowsU);
@@ -1193,12 +1194,12 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                         /* Estilo de celdas */
                         row.eachCell((cell) => {
                             const col = +cell.col;
-                            if ([1, 3, 4].includes(col)) {
+                            if ([1, 2, 3, 4].includes(col)) {
                                 cell.alignment = HORIZONTAL_CENTER_ALIGNMENT;
-                            } else if (col >= 6 && col <= 7) {
+                            } else if (col >= 6 && col <= 8) {
                                 cell.alignment = HORIZONTAL_RIGHT_ALIGNMENT;
                                 cell.numFmt = CURRENCY_FORMAT;
-                            } else if ([8, 9, 10].includes(col)) {
+                            } else if ([9, 10].includes(col)) {
                                 cell.alignment = HORIZONTAL_RIGHT_ALIGNMENT;
                             }
     
@@ -1231,15 +1232,9 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                     '',
                     '',
                     '',
+                    '',
+                    '',
                     'Total',
-                    {
-                        formula: `=SUM(F${rowIni + 1}:F${rowCount})`,
-                        date1904: false,
-                    },
-                    {
-                        formula: `=SUM(G${rowIni + 1}:G${rowCount})`,
-                        date1904: false,
-                    },
                     {
                         formula: `=SUM(H${rowIni + 1}:H${rowCount})`,
                         date1904: false,
@@ -1261,8 +1256,10 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                     const col = getExcelColumnLetter(+cell.col);
                     cell.style = Object.assign(cell.style, STYLE_FOOT);
                     if (cell.type != ExcelJS.ValueType.Null) {
-                        if ([6, 7].includes(+cell.col)) {
+                        if ([8].includes(+cell.col)) {
                             cell.numFmt = CURRENCY_FORMAT;
+                        } else if ([7].includes(+cell.col)) {
+                            cell.alignment = HORIZONTAL_CENTER_ALIGNMENT;
                         }
                     }
     
@@ -1360,14 +1357,14 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                     result.amount_total,
                     result.articulos,
                     result.total_ventas,
-                    ((result.amount_total / total) * 100).toFixed(2),
+                    (result.amount_total / total).toFixed(2),
                 ];
     
                 return bodyRowData;
             });
             
             Promise.all(promises).then((rows) => {
-                console.timeEnd('customerInvoices');
+                console.timeEnd('orders');
                 const rowsU = rows.filter(row => row);
                 if (rowsU.length > 0) {
                     const createdRows = worksheet.addRows(rowsU);

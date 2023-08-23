@@ -6,8 +6,8 @@ import analyticsRouter from './routes/analytics';
 import { configure } from './tools';
 const app = express();
 const PORT = process.env.PORT || 3000;
-const privateKey = fs.readFileSync('ssl/privkey.pem');
-const certificate = fs.readFileSync('ssl/cert.pem');
+const privateKey = fs.readFileSync('ssl/localhost-key.pem');
+const certificate = fs.readFileSync('ssl/localhost.pem');
 
 configure();
 app.use((req, res, next) => {

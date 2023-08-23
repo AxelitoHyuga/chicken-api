@@ -107,11 +107,11 @@ const getCustomerInvoiceLinesReport = (filters: ReportOrderFilters, group?: numb
             sql += ` AND ord.quotation = 0`;
         }
 
-        if (group) {
+        if (group && group >= 0) {
             sql += ` ${groupBy[group] ? `GROUP BY ${groupBy[group]}` : ''}`;
         }
 
-        if (sort) {
+        if (sort && sort >= 0) {
             sql += ` ORDER BY ${sortBy[sort] ? sortBy[sort] : 'cin.date_invoice,cin.\`name\`'}`;
             
             if (order) {
@@ -130,15 +130,23 @@ const getCustomerInvoiceLinesReport = (filters: ReportOrderFilters, group?: numb
 
 const getPaymentMethod = (paymentMethodIds: string): Promise<string | null> => {
     return new Promise((resolve, reject) => {
-        const sql = `SELECT GROUP_CONCAT(name SEPARATOR ', ') AS payment_methods
-                    FROM ${PREFIX}payment_method WHERE payment_method IN (${paymentMethodIds})`;
-
-        connection.query(sql, (err, rows) => {
-            if (err)
-                reject(err);
-
-            resolve(rows[0] && rows[0].payment_methods ? rows[0].payment_methods : null);
-        })
+        if (paymentMethodIds && paymentMethodIds !== '') {
+            const sql = `SELECT GROUP_CONCAT(name SEPARATOR ', ') AS ${PREFIX}payment_methods
+                        FROM ${PREFIX}payment_method WHERE payment_method_id IN (${paymentMethodIds})`;
+    
+            connection.query(sql, (err, rows) => {
+                if (err)
+                    reject(err);
+    
+                if (Array.isArray(rows) && rows.length > 0 && rows[0].payment_methods) {
+                    resolve(rows[0].payment_methods);
+                } else {
+                    resolve(null);
+                }
+            });
+        } else {
+            resolve(null);
+        }
     });
 }
 

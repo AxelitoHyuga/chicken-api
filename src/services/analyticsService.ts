@@ -1,5 +1,5 @@
 // import mysql from "mysql";
-import { getCategories, getCustomerInvoiceLinesReport, getDevoluciones, getPaymentMethod } from "../models/analyticsModel";
+import { getBranch, getCash, getCategories, getCustomerInvoiceLinesReport, getDevoluciones, getPaymentMethod, getProduct, getProductCategory } from "../models/analyticsModel";
 import { getExcelColumnLetter, CustomError } from "../tools";
 import { ReportOrderFilters, RowReportOrder } from "../types";
 import * as ExcelJS from "exceljs";
@@ -189,14 +189,53 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
         const worksheet = workbook.addWorksheet('Sheet 1');
 
         /* --- Textos de Filtros --- */
+        let branchName, shiftName, productCategoryInfo, productCategoryInfo2, productCategoryInfo3, productName;
+        if (filters.productId != null) {
+            const productInfo = await getProduct(filters.productId);
+
+            if (productInfo != null) {
+                productName = productInfo.name;
+            }
+        }
+        if (filters.branchId != null) {
+            const branchInfo = await getBranch(filters.branchId);
+
+            if (branchInfo != null) {
+                branchName = branchInfo.name;
+            }
+        }
+        if (filters.boxId != null) {
+            const shifInfo = await getCash(filters.boxId);
+
+            if (shifInfo != null) {
+                shiftName = shifInfo.description;
+            }
+        }
+        if (filters.productCategoryId != null) {
+            productCategoryInfo = await getProductCategory(filters.productCategoryId);
+        }
+        if (filters.productCategory2Id != null) {
+            productCategoryInfo2 = await getProductCategory(filters.productCategory2Id);
+        }
+        if (filters.productCategory3Id != null) {
+            productCategoryInfo3 = await getProductCategory(filters.productCategory3Id);
+        }
+
         let filterText = '';
         filterText +=  filters.name != null ? `${filterText.length > 0 ? '\n' : ''} Número: ${filters.name}` : '';
         filterText +=  filters.dateFrom != null || filters.dateTo ? `${filterText.length > 0 ? '\n' : ''} Fecha: Desde ${filters.dateFrom != null ? filters.dateFrom : '--'} hasta ${filters.dateTo != null ? filters.dateTo : '--'}` : '';
         filterText +=  filters.origin != null ? `${filterText.length > 0 ? '\n' : ''} Doc. Origen: ${filters.origin}` : '';
         filterText +=  filters.customer != null ? `${filterText.length > 0 ? '\n' : ''} Cliente: ${filters.customer}` : '';
         filterText +=  filters.salesperson != null ? `${filterText.length > 0 ? '\n' : ''} Vendedor: ${filters.salesperson}` : '';
-        filterText +=  filters.productCategoryId != null ? `${filterText.length > 0 ? '\n' : ''} Categoria de producto: ${filters.productCategoryId}` : '';
+        filterText +=  filters.productId != null ? `${filterText.length > 0 ? '\n' : ''} Producto: ${productName}` : '';
+        filterText +=  filters.productCategoryId != null ? `${filterText.length > 0 ? '\n' : ''} Categoria de producto: ${productCategoryInfo.name}` : '';
+        filterText +=  filters.productCategory2Id != null ? `${filterText.length > 0 ? '\n' : ''} Sub Categoria de producto: ${productCategoryInfo2.dos}` : '';
+        filterText +=  filters.productCategory3Id != null ? `${filterText.length > 0 ? '\n' : ''} Sub Sub Categoria de producto: ${productCategoryInfo3.tres}` : '';
         filterText +=  filters.showCanceled != null ? `${filterText.length > 0 ? '\n' : ''} Mostrar cancelados: ${filters.showCanceled}` : '';
+        filterText +=  filters.reference != null ? `${filterText.length > 0 ? '\n' : ''} Referencia: ${filters.reference}` : '';
+        filterText +=  filters.reportType != null ? `${filterText.length > 0 ? '\n' : ''} Tipo de reporte: ${filters.reportType}` : '';
+        filterText +=  filters.boxId != null ? `${filterText.length > 0 ? '\n' : ''} Caja: ${shiftName}` : '';
+        filterText +=  filters.branchId != null ? `${filterText.length > 0 ? '\n' : ''} Sucursal: ${branchName}` : '';
         filterText +=  `${filterText.length > 0 ? '\n' : ''} Fecha de creación: ${new Date().toLocaleDateString('es-mx')}`;
 
         const reportType = filters.reportType;
@@ -217,7 +256,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
             worksheet.mergeCells(`A${rowIni}:${colEnd}${rowIni}`);
             cell.value = filterText;
             cell.style = STYLE_FILTER_TEXT;
-            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 13) + 6;
+            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 15) + 6;
     
             /* --- Ancho de columnas --- */
             worksheet.getColumn('A').width = 35;
@@ -387,7 +426,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
             worksheet.mergeCells(`A${rowIni}:${colEnd}${rowIni}`);
             cell.value = filterText;
             cell.style = STYLE_FILTER_TEXT;
-            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 13) + 6;
+            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 15) + 6;
     
             /* --- Ancho de columnas --- */
             worksheet.getColumn('A').width = 35;
@@ -594,7 +633,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
             worksheet.mergeCells(`A${rowIni}:${colEnd}${rowIni}`);
             cell.value = filterText;
             cell.style = STYLE_FILTER_TEXT;
-            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 13) + 6;
+            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 15) + 6;
     
             /* --- Ancho de columnas --- */
             worksheet.getColumn('A').width = 20;
@@ -810,7 +849,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
             worksheet.mergeCells(`A${rowIni}:${colEnd}${rowIni}`);
             cell.value = filterText;
             cell.style = STYLE_FILTER_TEXT;
-            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 13) + 6;
+            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 15) + 6;
     
             /* --- Ancho de columnas --- */
             worksheet.getColumn('A').width = 35;
@@ -923,7 +962,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
                         date1904: false,
                     },
                     {
-                        formula: `=(F${rowCount + 1}/C${rowCount + 1})`,
+                        formula: `=(F${rowCount + 1}/E${rowCount + 1})`,
                         date1904: false,
                     },
                 ];
@@ -982,7 +1021,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
             worksheet.mergeCells(`A${rowIni}:${colEnd}${rowIni}`);
             cell.value = filterText;
             cell.style = STYLE_FILTER_TEXT;
-            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 13) + 6;
+            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 15) + 6;
     
             /* --- Ancho de columnas --- */
             worksheet.getColumn('A').width = 25;
@@ -1126,7 +1165,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
             worksheet.mergeCells(`A${rowIni}:${colEnd}${rowIni}`);
             cell.value = filterText;
             cell.style = STYLE_FILTER_TEXT;
-            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 13) + 6;
+            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 15) + 6;
     
             /* --- Ancho de columnas --- */
             worksheet.getColumn('A').width = 25;
@@ -1307,7 +1346,7 @@ const generateReportOrderExcel = async (filtersUn: ReportOrderFilters): Promise<
             worksheet.mergeCells(`A${rowIni}:${colEnd}${rowIni}`);
             cell.value = filterText;
             cell.style = STYLE_FILTER_TEXT;
-            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 13) + 6;
+            worksheet.getRow(rowIni).height = (filterText.split('\n').length * 15) + 6;
     
             /* --- Ancho de columnas --- */
             worksheet.getColumn('A').width = 35;

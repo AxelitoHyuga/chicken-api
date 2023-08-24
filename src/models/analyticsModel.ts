@@ -107,11 +107,11 @@ const getCustomerInvoiceLinesReport = (filters: ReportOrderFilters, group?: numb
             sql += ` AND ord.quotation = 0`;
         }
 
-        if (group && group >= 0) {
+        if (group !== undefined && group >= 0) {
             sql += ` ${groupBy[group] ? `GROUP BY ${groupBy[group]}` : ''}`;
         }
 
-        if (sort && sort >= 0) {
+        if (sort !== undefined && sort >= 0) {
             sql += ` ORDER BY ${sortBy[sort] ? sortBy[sort] : 'cin.date_invoice,cin.\`name\`'}`;
             
             if (order) {
@@ -240,6 +240,7 @@ const getCategories = (filters: ReportOrderFilters): Promise<RowCategories[]> =>
         LEFT JOIN ya_user AS usr ON ord.create_uid=usr.id
         LEFT JOIN ya_shift AS shi ON shi.salesperson_id=sap.id
         LEFT JOIN ya_branch AS bra ON bra.branch_id=shi.branch_id
+        INNER JOIN ${PREFIX}customer AS cus ON ord.customer_id=cus.customer_id
         WHERE pro.product_id <> 1`;
         
         /* Filtros */
@@ -296,4 +297,88 @@ const getCategories = (filters: ReportOrderFilters): Promise<RowCategories[]> =>
     });
 };
 
-export { getCustomerInvoiceLinesReport, getPaymentMethod, getDevoluciones, getCategories };
+const getBranch = (branchId: number | string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        let sql = `SELECT bra.*, cou.\`name\` AS country, cou.address_format, zon.\`name\` AS zone, cit.\`name\` AS city
+            FROM ${PREFIX}branch AS bra
+                LEFT JOIN ${PREFIX}country AS cou ON bra.country_id=cou.id
+                LEFT JOIN ${PREFIX}zone AS zon ON bra.zone_id=zon.id
+                LEFT JOIN ${PREFIX}city AS cit ON bra.city_id=cit.id
+            WHERE bra.branch_id = ${branchId}`;
+
+        connection.query(sql, (err, [branch]) => {
+           if (err)
+            reject(err);
+
+           resolve(branch);
+        });
+    });
+};
+
+const getCash = (shiftId: number | string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        let sql = `SELECT shf.*
+            FROM ${PREFIX}shift AS shf
+            WHERE shf.id_shift = ${shiftId}`;
+
+        connection.query(sql, (err, [shift]) => {
+           if (err)
+            reject(err);
+
+           resolve(shift);
+        });
+    });
+};
+
+const getProductCategory = (productCategoryId: number | string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        let sql = `SELECT SQL_CALC_FOUND_ROWS pcp.product_category_id, prc.sat_product_category_id,
+            GROUP_CONCAT(prc2.name ORDER BY pcp.level SEPARATOR '&nbsp;&nbsp;&gt;&nbsp;&nbsp;') AS name,
+            prc.name AS name_main,prc.description,prc.parent_id,prc.internal_type,prc.sort_order,prc.status,
+            prc2.name as dos, prc.name as tres,
+            0 AS has_child,
+            sapc.\`name\` AS sat_product_category, sapc.code_sat AS sat_product_category_code_sat
+            FROM ${PREFIX}product_category_path AS pcp 
+                LEFT JOIN ${PREFIX}product_category AS prc ON pcp.product_category_id = prc.product_category_id
+                LEFT JOIN ${PREFIX}product_category AS prc2 ON pcp.path_id = prc2.product_category_id
+                LEFT JOIN ${PREFIX}product_category AS prc3 ON pcp.path_id = prc3.product_category_id
+                LEFT JOIN ${PREFIX}sat_product_category AS sapc ON prc.sat_product_category_id = sapc.sat_product_category_id
+            WHERE pcp.product_category_id = ${productCategoryId}
+            GROUP BY pcp.product_category_id`;
+
+        connection.query(sql, (err, [category]) => {
+           if (err)
+            reject(err);
+
+           resolve(category);
+        });
+    });
+};
+
+const getProduct = (productId: number | string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        let sql = `SELECT SQL_CALC_FOUND_ROWS pro.*,prc.\`name\` AS product_category,pty.\`name\` AS product_type,
+        uom.decimal_place AS decimal_place_qty,uom.\`name\` AS product_uom,mnf.\`name\` AS manufacturer,comp.\`code\` AS company_code,
+        sapc.\`name\` AS sat_product_category,sapc.code_sat AS sat_product_category_code_sat, supp.name AS supplier,
+        sapc2.sat_product_category_id AS sat_product_category_id2,sapc2.\`name\` AS sat_product_category2,sapc2.code_sat AS sat_product_category_code_sat2
+        FROM ${PREFIX}product AS pro
+            INNER JOIN ${PREFIX}product_uom AS uom ON pro.product_uom_id=uom.product_uom_id
+            INNER JOIN ${PREFIX}product_category AS prc ON pro.product_category_id=prc.product_category_id
+            INNER JOIN ${PREFIX}product_type AS pty ON pro.product_type_id=pty.product_type_id
+            INNER JOIN ${PREFIX}manufacturer AS mnf ON pro.manufacturer_id=mnf.manufacturer_id
+            INNER JOIN ${PREFIX}company AS comp ON pro.company_id=comp.id
+            LEFT JOIN ${PREFIX}sat_product_category AS sapc ON pro.sat_product_category_id=sapc.sat_product_category_id
+            LEFT JOIN ${PREFIX}sat_product_category AS sapc2 ON prc.sat_product_category_id=sapc2.sat_product_category_id
+            LEFT JOIN ${PREFIX}supplier AS supp ON pro.supplier_id=supp.supplier_id
+        WHERE pro.product_id = ${productId}`;
+
+        connection.query(sql, (err, [product]) => {
+           if (err)
+            reject(err);
+
+           resolve(product);
+        });
+    });
+};
+
+export { getCustomerInvoiceLinesReport, getPaymentMethod, getDevoluciones, getCategories, getBranch, getCash, getProductCategory, getProduct };
